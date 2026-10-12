@@ -1,0 +1,85 @@
+name = "yardsign-collector"
+main = "src/index.ts"
+compatibility_date = "2025-09-01"
+
+[vars]
+# "mock" (fake people) or "delivr" (needs the DELIVR_API_KEY and DELIVR_API_SECRET secrets, and a production
+# key: the dev key only returns sample rows). With "delivr", a site with no delivr_pixel_id still uses mock.
+IDENTITY_PROVIDER = "mock"
+# Delivr project that new site pixels are created in (public id; the key pair is a secret).
+DELIVR_PROJECT_ID = "00000000-0000-0000-0000-000000000001"
+# Bill protection (apps/collector/src/spend.ts). Before every Delivr call the step adds up this month's
+# and today's identity_requests.cost_cents and refuses the call if the worst case would cross either cap.
+# Whole cents. $1,250 a month, $10 a day (about 400 full-profile rows; back to $10 on Oct 8, the owner does not want $50 a day). Alerts go to SPEND_ALERT_EMAIL at 50%, 80% and at either cap.
+DELIVR_MONTHLY_CAP_CENTS = "125000"
+DELIVR_DAILY_CAP_CENTS = "1000"
+SPEND_ALERT_EMAIL = "alerts@example.com"
+# "on" = ask Delivr only after a human signal (2+ views or 10 s on a page). Off since Oct 8: a no-match is free,
+# Delivr matches on the first page view or never, and the caps above still stop any surge.
+DELIVR_ENGAGEMENT_GATE = "off"
+# Where the pixel posts to and what install tags point at. Local dev falls back to the request origin.
+PUBLIC_BASE_URL = "https://your-domain.com"
+# Who we identify: Texas (the visit or the home address). The list is ALLOWED_STATES in src/policy.ts, not a var here.
+# Days an email-only match or a miss stays open for another lookup on a return visit. A full lead closes the visitor for 30 days.
+RECHECK_DAYS = "7"
+# A match scoring below this after the location check is not a lead. 0 since Oct 8: every match goes out, the card shows the score.
+MIN_CONFIDENCE = "0"
+RATE_LIMIT_SITE_PER_MIN = "600"
+RATE_LIMIT_IP_PER_MIN = "60"
+# Overridden at deploy time: `npm run deploy` passes --var BUILD_SHA:<git sha>.
+BUILD_SHA = "dev"
+# Lead cards by email. "resend" or "postmark"; leave empty to log leads only. EMAIL_API_KEY is a secret.
+# Sends from the mail. subdomain so the main domain's reputation stays clean (DNS set up Oct 5).
+EMAIL_PROVIDER = "resend"
+EMAIL_FROM = "Yardsign <leads@mail.tryyardsign.com>"
+# Hail on the lead card. "noaa" = National Weather Service storm reports for Texas (free, no key); "mock" = fake DFW hail.
+HAIL_SOURCE = "noaa"
+# Lead addresses become map points so hail distance is measured from the house. "census" (free, no key) or "none".
+GEOCODER = "census"
+
+# CPU time per request. Set in the dashboard on Oct 5; kept here so a deploy never wipes it.
+[limits]
+cpu_ms = 200
+
+# Custom domains: Cloudflare creates the DNS records itself. workers.dev stays on as a fallback.
+workers_dev = true
+
+# [[routes]]
+# pattern = "your-domain.com"
+# custom_domain = true
+
+# [[routes]]
+# pattern = "www.your-domain.com"
+# custom_domain = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "yardsign-core"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "../../packages/db/migrations"
+
+# Every 5 minutes: poll unresolved visits for up to 4 minutes (in queue mode, only ones older than 30 minutes
+# that the queue lost), then null raw IPs older than 72h and prune rate-limit rows.
+# Every hour at :23: retry the Delivr pixel for paid sites that have none, then sync the last 3 days of hail
+# from the configured source; at 03:23 UTC, the full 6 months.
+[triggers]
+crons = ["*/5 * * * *", "23 * * * *"]
+
+# Cloudflare Queues need the Workers Paid plan. Uncomment both blocks to switch the
+# resolution step from poll mode to queue mode. Nothing else changes; see src/scheduler.ts.
+# [[queues.producers]]
+# binding = "RESOLVE_QUEUE"
+# queue = "yardsign-resolve"
+#
+# [[queues.consumers]]
+# queue = "yardsign-resolve"
+# max_batch_size = 10
+# max_retries = 3
+
+# Secrets (set with `wrangler secret put NAME`, or in .dev.vars for local dev):
+#   ADMIN_TOKEN   bearer token for /admin/* (long and random)
+#   IP_SALT       salt for ip_hash; set once, never change
+#   DELIVR_API_KEY and DELIVR_API_SECRET  only when IDENTITY_PROVIDER = "delivr"
+#   EMAIL_API_KEY   only when EMAIL_PROVIDER is set
+#   STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_STARTER, STRIPE_PRICE_PRO  checkout is off until all four exist
+#   CF_ACCESS_TEAM_DOMAIN and CF_ACCESS_AUD  the Cloudflare Access app in front of /admin; the page refuses everyone until both exist

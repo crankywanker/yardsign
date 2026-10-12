@@ -1,0 +1,22 @@
+{
+  "name": "@yardsign/collector",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy --var BUILD_SHA:$(git rev-parse --short HEAD)",
+    "migrate:local": "wrangler d1 migrations apply yardsign-core --local",
+    "migrate:remote": "wrangler d1 migrations apply yardsign-core --remote",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@yardsign/db": "*",
+    "@yardsign/identity": "*",
+    "@yardsign/pixel": "*",
+    "@yardsign/scoring": "*",
+    "hono": "^4.6.0",
+    "stripe": "^23.0.0"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "name": "yardsign",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w @yardsign/pixel",
+    "test": "npm run build && npm run test --workspaces --if-present",
+    "typecheck": "npm run build && npm run typecheck --workspaces --if-present",
+    "dev": "npm run build && npm run dev -w @yardsign/collector",
+    "migrate": "npm run migrate:local -w @yardsign/collector",
+    "deploy": "npm run build && npm run deploy -w @yardsign/collector",
+    "smoke": "bash scripts/smoke.sh"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.22.0",
+    "@cloudflare/workers-types": "^5.20261001.1",
+    "@types/node": "^22.20.5",
+    "esbuild": "^0.28.0",
+    "typescript": "^5.6.0",
+    "vitest": "^4.1.0",
+    "wrangler": "^4.0.0"
+  }
+}

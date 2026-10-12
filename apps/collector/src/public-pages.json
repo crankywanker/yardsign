@@ -1,0 +1,26 @@
+[
+  {
+    "path": "/",
+    "title": "Home",
+    "description": "What Yardsign does, a live demo card, pricing, and common questions.",
+    "updated": "2026-10-05"
+  },
+  {
+    "path": "/privacy",
+    "title": "Privacy policy",
+    "description": "What Yardsign collects about website visitors, how long it keeps it, and how to opt out.",
+    "updated": "2026-10-01"
+  },
+  {
+    "path": "/terms",
+    "title": "Terms of service",
+    "description": "The rules for businesses that use Yardsign on their website.",
+    "updated": "2026-10-01"
+  },
+  {
+    "path": "/optout",
+    "title": "Opt out",
+    "description": "Ask Yardsign to delete your matches and never identify you on any site that uses it.",
+    "updated": "2026-10-05"
+  }
+]
